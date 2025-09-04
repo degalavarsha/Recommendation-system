@@ -33,9 +33,8 @@ SDP/
 
 The primary dataset used in this project is the **Last.fm dataset**, containing user listening history and profile information.
 
-* **Dataset Name:** Last.fm Dataset 360K
-* **Description:** Contains user, artist, and plays tuples collected from the Last.fm API.
-* **Download Link:** [Last.fm Dataset 360K](https://www.upf.edu/web/mtg/lastfm360k)
+* **Dataset Name:** Last.fm Dataset 
+* **Download Link:** 
 
 Place the downloaded files into the corresponding folders: `datasets/originalCSV/` and `datasets/originalTSV/`.
 
