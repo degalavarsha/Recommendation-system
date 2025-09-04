@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Recommendation System</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Playfair Display", serif;
+      }
+
+      body {
+        background-image: url("background.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: white;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-image 0.5s ease;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .login-container {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 40px;
+        border-radius: 10px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .options-container {
+        background-color: rgba(50, 50, 50, 0.9);
+        padding: 30px;
+        border-radius: 10px;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .data-container {
+        background-color: rgba(220, 220, 220, 0.9);
+        padding: 30px;
+        border-radius: 10px;
+        color: #333;
+        text-align: left;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      h1,
+      h2 {
+        margin-bottom: 20px;
+      }
+
+      input {
+        padding: 12px 15px;
+        width: 100%;
+        max-width: 400px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      button,
+      .option-btn {
+        padding: 12px 25px;
+        margin: 10px 5px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      button:hover,
+      .option-btn:hover {
+        background-color: #45a049;
+      }
+
+      .back-btn {
+        background-color: #f44336;
+      }
+
+      .back-btn:hover {
+        background-color: #d32f2f;
+      }
+
+      .option-btn {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+        background-color: #666;
+        text-align: left;
+        padding: 15px 20px;
+      }
+
+      .option-btn:hover {
+        background-color: #555;
+      }
+
+      .data-item {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 5px;
+      }
+
+      .data-key {
+        font-weight: bold;
+        margin-right: 5px;
+      }
+
+      .data-value {
+        word-break: break-word;
+      }
+
+      .visible {
+        display: block;
+        opacity: 1;
+      }
+
+      .movie-option {
+        background-color: #888;
+        margin-bottom: 10px;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-left: 10px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Login Page -->
+      <div class="login-container" id="login-container">
+        <h1>Music Recommendation System</h1>
+        <p>Enter your User ID to continue</p>
+        <input type="text" id="user-id-input" placeholder="Enter User ID" />
+        <button id="login-btn">Enter</button>
+      </div>
+
+      <!-- Main Options Page -->
+      <div class="options-container" id="options-container">
+        <h2>Select an Option</h2>
+        <button class="option-btn" data-option="user-details">
+          User Details
+        </button>
+        <button class="option-btn" data-option="top-artists">
+          User Top Artists
+        </button>
+        <button class="option-btn" data-option="similar-users">
+          Similar Users
+        </button>
+        <button class="option-btn" data-option="recommended-artists">
+          Recommended Artists
+        </button>
+        <button class="option-btn" data-option="movies-top-artists">
+          Recommended Movies Based on Top Artists
+        </button>
+        <button class="option-btn" data-option="movies-recommended-artists">
+          Recommended Movies based on Recommended Artists
+        </button>
+        <button class="back-btn" id="options-back-btn">Back</button>
+      </div>
+
+      <!-- User Details Options -->
+      <div class="options-container" id="user-details-options">
+        <h2>User Details - Select Field</h2>
+        <button class="option-btn" data-field="original_user_id">
+          Original User ID
+        </button>
+        <button class="option-btn" data-field="user_id">User ID</button>
+        <button class="option-btn" data-field="age">Age</button>
+        <button class="option-btn" data-field="gender">Gender</button>
+        <button class="option-btn" data-field="country">Country</button>
+        <button class="option-btn" data-field="signup_date">Signup Date</button>
+        <button class="option-btn" data-field="final_cluster">
+          Final Cluster
+        </button>
+        <button class="back-btn" id="user-details-back-btn">Back</button>
+      </div>
+
+      <!-- User Details Data Display -->
+      <div class="data-container" id="user-details-data">
+        <h2>User Details</h2>
+        <div id="user-details-content"></div>
+        <button class="back-btn" id="user-details-data-back-btn">Back</button>
+      </div>
+
+      <!-- User Top Artists Data Display -->
+      <div class="data-container" id="top-artists-data">
+        <h2>User Top Artists</h2>
+        <div id="top-artists-content"></div>
+        <button class="back-btn" id="top-artists-back-btn">Back</button>
+      </div>
+
+      <!-- Similar Users Data Display -->
+      <div class="data-container" id="similar-users-data">
+        <h2>Similar Users</h2>
+        <div id="similar-users-content"></div>
+        <button class="back-btn" id="similar-users-back-btn">Back</button>
+      </div>
+
+      <!-- Recommended Artists Data Display -->
+      <div class="data-container" id="recommended-artists-data">
+        <h2>Recommended Artists</h2>
+        <div id="recommended-artists-content"></div>
+        <button class="back-btn" id="recommended-artists-back-btn">Back</button>
+      </div>
+
+      <!-- Movies Based on Top Artists Options -->
+      <div class="options-container" id="movies-top-artists-options">
+        <h2>Recommended Movies Based on Top Artists</h2>
+        <div id="movies-top-artists-list"></div>
+        <button class="back-btn" id="movies-top-artists-back-btn">Back</button>
+      </div>
+
+      <!-- Movie Details Display (for Top Artists) -->
+      <div class="data-container" id="movie-details-top-data">
+        <h2>Movie Details</h2>
+        <div id="movie-details-top-content"></div>
+        <button class="back-btn" id="movie-details-top-data-back-btn">
+          Back
+        </button>
+      </div>
+
+      <!-- Movies Based on Recommended Artists Options -->
+      <div class="options-container" id="movies-recommended-artists-options">
+        <h2>Recommended Movies Based on Recommended Artists</h2>
+        <div id="movies-recommended-artists-list"></div>
+        <button class="back-btn" id="movies-recommended-artists-back-btn">
+          Back
+        </button>
+      </div>
+
+      <!-- Movie Details Display (for Recommended Artists) -->
+      <div class="data-container" id="movie-details-recommended-data">
+        <h2>Movie Details</h2>
+        <div id="movie-details-recommended-content"></div>
+        <button class="back-btn" id="movie-details-recommended-data-back-btn">
+          Back
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Current user ID and data
+      let currentUserId = null;
+      let userDetailsData = {};
+      let userTopArtistsData = {};
+      let similarUsersData = {};
+      let recommendedArtistsData = {};
+      let artistMoviesData = {};
+
+      // Load CSV files
+      async function loadCSVData() {
+        try {
+          // Load user details
+          const userDetailsResponse = await fetch(
+            "datasets/web/user_details.csv"
+          );
+          const userDetailsText = await userDetailsResponse.text();
+          const userDetailsParsed = Papa.parse(userDetailsText, {
+            header: true,
+          }).data;
+
+          // Convert to dictionary format for easy lookup
+          userDetailsData = {};
+          userDetailsParsed.forEach((row) => {
+            if (row.user_id) {
+              userDetailsData[row.user_id] = row;
+            }
+          });
+
+          // Load user top artists
+          const topArtistsResponse = await fetch(
+            "datasets/web/user_top_artists.csv"
+          );
+          const topArtistsText = await topArtistsResponse.text();
+          const topArtistsParsed = Papa.parse(topArtistsText, {
+            header: true,
+          }).data;
+
+          userTopArtistsData = {};
+          topArtistsParsed.forEach((row) => {
+            if (row.user_id) {
+              if (!userTopArtistsData[row.user_id]) {
+                userTopArtistsData[row.user_id] = [];
+              }
+              userTopArtistsData[row.user_id].push(row);
+            }
+          });
+
+          // Load similar users
+          const similarUsersResponse = await fetch(
+            "datasets/similarity/users_similarity.csv"
+          );
+          const similarUsersText = await similarUsersResponse.text();
+          const similarUsersParsed = Papa.parse(similarUsersText, {
+            header: true,
+          }).data;
+
+          similarUsersData = {};
+          similarUsersParsed.forEach((row) => {
+            if (row.user_id) {
+              if (!similarUsersData[row.user_id]) {
+                similarUsersData[row.user_id] = [];
+              }
+              similarUsersData[row.user_id].push(row);
+            }
+          });
+
+          // Load recommended artists
+          const recommendedArtistsResponse = await fetch(
+            "datasets/recommendations/recommendations.csv"
+          );
+          const recommendedArtistsText =
+            await recommendedArtistsResponse.text();
+          const recommendedArtistsParsed = Papa.parse(recommendedArtistsText, {
+            header: true,
+          }).data;
+
+          recommendedArtistsData = {};
+          recommendedArtistsParsed.forEach((row) => {
+            if (row.user_id) {
+              if (!recommendedArtistsData[row.user_id]) {
+                recommendedArtistsData[row.user_id] = [];
+              }
+              recommendedArtistsData[row.user_id].push(row);
+            }
+          });
+
+          // Load artist movies
+          const artistMoviesResponse = await fetch(
+            "datasets/web/artist_movie.csv"
+          );
+          const artistMoviesText = await artistMoviesResponse.text();
+          const artistMoviesParsed = Papa.parse(artistMoviesText, {
+            header: true,
+          }).data;
+
+          artistMoviesData = {};
+          artistMoviesParsed.forEach((row) => {
+            if (row.artist_id) {
+              artistMoviesData[row.artist_id] = row;
+            }
+          });
+
+          console.log("All data loaded successfully");
+        } catch (error) {
+          console.error("Error loading data:", error);
+          alert("Error loading data. Please check console for details.");
+        }
+      }
+
+      // Initialize by loading all data
+      loadCSVData();
+
+      // DOM elements
+      const loginContainer = document.getElementById("login-container");
+      const optionsContainer = document.getElementById("options-container");
+      const userDetailsOptions = document.getElementById(
+        "user-details-options"
+      );
+      const userDetailsDataContainer =
+        document.getElementById("user-details-data");
+      const topArtistsData = document.getElementById("top-artists-data");
+      const similarUsersDataContainer =
+        document.getElementById("similar-users-data");
+      const recommendedArtistsDataContainer = document.getElementById(
+        "recommended-artists-data"
+      );
+      const moviesTopArtistsOptions = document.getElementById(
+        "movies-top-artists-options"
+      );
+      const movieDetailsTopData = document.getElementById(
+        "movie-details-top-data"
+      );
+      const moviesRecommendedArtistsOptions = document.getElementById(
+        "movies-recommended-artists-options"
+      );
+      const movieDetailsRecommendedData = document.getElementById(
+        "movie-details-recommended-data"
+      );
+
+      // Login button click handler
+      document
+        .getElementById("login-btn")
+        .addEventListener("click", function () {
+          const userIdInput = document
+            .getElementById("user-id-input")
+            .value.trim();
+
+          if (userDetailsData[userIdInput]) {
+            currentUserId = userIdInput;
+            loginContainer.classList.remove("visible");
+            setTimeout(() => {
+              optionsContainer.classList.add("visible");
+            }, 10);
+          } else {
+            alert("User ID not found. Please try again.");
+          }
+        });
+
+      // Back button handlers
+      document
+        .getElementById("options-back-btn")
+        .addEventListener("click", function () {
+          optionsContainer.classList.remove("visible");
+          setTimeout(() => {
+            loginContainer.classList.add("visible");
+            document.getElementById("user-id-input").value = "";
+          }, 10);
+        });
+
+      document
+        .getElementById("user-details-back-btn")
+        .addEventListener("click", function () {
+          userDetailsOptions.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("user-details-data-back-btn")
+        .addEventListener("click", function () {
+          userDetailsDataContainer.classList.remove("visible");
+          setTimeout(() => {
+            userDetailsOptions.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("top-artists-back-btn")
+        .addEventListener("click", function () {
+          topArtistsData.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("similar-users-back-btn")
+        .addEventListener("click", function () {
+          similarUsersDataContainer.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("recommended-artists-back-btn")
+        .addEventListener("click", function () {
+          recommendedArtistsDataContainer.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("movies-top-artists-back-btn")
+        .addEventListener("click", function () {
+          moviesTopArtistsOptions.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("movie-details-top-data-back-btn")
+        .addEventListener("click", function () {
+          movieDetailsTopData.classList.remove("visible");
+          setTimeout(() => {
+            moviesTopArtistsOptions.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("movies-recommended-artists-back-btn")
+        .addEventListener("click", function () {
+          moviesRecommendedArtistsOptions.classList.remove("visible");
+          setTimeout(() => {
+            optionsContainer.classList.add("visible");
+          }, 10);
+        });
+
+      document
+        .getElementById("movie-details-recommended-data-back-btn")
+        .addEventListener("click", function () {
+          movieDetailsRecommendedData.classList.remove("visible");
+          setTimeout(() => {
+            moviesRecommendedArtistsOptions.classList.add("visible");
+          }, 10);
+        });
+
+      // Main option buttons
+      document.querySelectorAll("[data-option]").forEach((button) => {
+        button.addEventListener("click", function () {
+          const option = this.getAttribute("data-option");
+          optionsContainer.classList.remove("visible");
+
+          switch (option) {
+            case "user-details":
+              setTimeout(() => {
+                userDetailsOptions.classList.add("visible");
+              }, 10);
+              break;
+            case "top-artists":
+              showTopArtists();
+              break;
+            case "similar-users":
+              showSimilarUsers();
+              break;
+            case "recommended-artists":
+              showRecommendedArtists();
+              break;
+            case "movies-top-artists":
+              showMoviesTopArtistsOptions();
+              break;
+            case "movies-recommended-artists":
+              showMoviesRecommendedArtistsOptions();
+              break;
+          }
+        });
+      });
+
+      // User details field buttons
+      document.querySelectorAll("[data-field]").forEach((button) => {
+        button.addEventListener("click", function () {
+          const field = this.getAttribute("data-field");
+          showUserDetailsField(field);
+        });
+      });
+
+      // Show user details for a specific field
+      function showUserDetailsField(field) {
+        userDetailsOptions.classList.remove("visible");
+
+        const user = userDetailsData[currentUserId];
+        const contentDiv = document.getElementById("user-details-content");
+        contentDiv.innerHTML = "";
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "data-item";
+
+        const keySpan = document.createElement("span");
+        keySpan.className = "data-key";
+        keySpan.textContent = field.replace("_", " ") + ":";
+
+        const valueSpan = document.createElement("span");
+        valueSpan.className = "data-value";
+        valueSpan.textContent = user[field];
+
+        itemDiv.appendChild(keySpan);
+        itemDiv.appendChild(valueSpan);
+        contentDiv.appendChild(itemDiv);
+
+        setTimeout(() => {
+          userDetailsDataContainer.classList.add("visible");
+        }, 10);
+      }
+
+      // Show user top artists
+      function showTopArtists() {
+        optionsContainer.classList.remove("visible");
+
+        const artists = userTopArtistsData[currentUserId] || [];
+        const contentDiv = document.getElementById("top-artists-content");
+        contentDiv.innerHTML = "";
+
+        artists.forEach((artist) => {
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "data-item";
+
+          for (const key in artist) {
+            if (artist.hasOwnProperty(key)) {
+              const keySpan = document.createElement("span");
+              keySpan.className = "data-key";
+              keySpan.textContent = key.replace("_", " ") + ":";
+
+              const valueSpan = document.createElement("span");
+              valueSpan.className = "data-value";
+              valueSpan.textContent = artist[key];
+
+              const lineBreak = document.createElement("br");
+
+              itemDiv.appendChild(keySpan);
+              itemDiv.appendChild(valueSpan);
+              itemDiv.appendChild(lineBreak);
+            }
+          }
+
+          contentDiv.appendChild(itemDiv);
+        });
+
+        setTimeout(() => {
+          topArtistsData.classList.add("visible");
+        }, 10);
+      }
+
+      // Show similar users - FIXED THIS FUNCTION
+      function showSimilarUsers() {
+        optionsContainer.classList.remove("visible");
+
+        const similar = similarUsersData[currentUserId] || [];
+        const contentDiv = document.getElementById("similar-users-content");
+        contentDiv.innerHTML = "";
+
+        if (similar.length === 0) {
+          const noDataDiv = document.createElement("div");
+          noDataDiv.className = "data-item";
+          noDataDiv.textContent = "No similar users found for this user.";
+          contentDiv.appendChild(noDataDiv);
+        } else {
+          similar.forEach((user) => {
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "data-item";
+
+            for (const key in user) {
+              if (user.hasOwnProperty(key)) {
+                const keySpan = document.createElement("span");
+                keySpan.className = "data-key";
+                keySpan.textContent = key.replace("_", " ") + ":";
+
+                const valueSpan = document.createElement("span");
+                valueSpan.className = "data-value";
+                valueSpan.textContent = user[key];
+
+                const lineBreak = document.createElement("br");
+
+                itemDiv.appendChild(keySpan);
+                itemDiv.appendChild(valueSpan);
+                itemDiv.appendChild(lineBreak);
+              }
+            }
+
+            contentDiv.appendChild(itemDiv);
+          });
+        }
+
+        setTimeout(() => {
+          similarUsersDataContainer.classList.add("visible");
+        }, 10);
+      }
+
+      // Show recommended artists
+      function showRecommendedArtists() {
+        optionsContainer.classList.remove("visible");
+
+        const recommended = recommendedArtistsData[currentUserId] || [];
+        const contentDiv = document.getElementById(
+          "recommended-artists-content"
+        );
+        contentDiv.innerHTML = "";
+
+        recommended.forEach((artist) => {
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "data-item";
+
+          for (const key in artist) {
+            if (artist.hasOwnProperty(key)) {
+              const keySpan = document.createElement("span");
+              keySpan.className = "data-key";
+              keySpan.textContent = key.replace("_", " ") + ":";
+
+              const valueSpan = document.createElement("span");
+              valueSpan.className = "data-value";
+              valueSpan.textContent = artist[key];
+
+              const lineBreak = document.createElement("br");
+
+              itemDiv.appendChild(keySpan);
+              itemDiv.appendChild(valueSpan);
+              itemDiv.appendChild(lineBreak);
+            }
+          }
+
+          contentDiv.appendChild(itemDiv);
+        });
+
+        setTimeout(() => {
+          recommendedArtistsDataContainer.classList.add("visible");
+        }, 10);
+      }
+
+      // Show movie options based on top artists
+      function showMoviesTopArtistsOptions() {
+        optionsContainer.classList.remove("visible");
+
+        const artists = userTopArtistsData[currentUserId] || [];
+        const moviesListDiv = document.getElementById(
+          "movies-top-artists-list"
+        );
+        moviesListDiv.innerHTML = "";
+
+        artists.forEach((artist) => {
+          const artistId = artist.artist_id;
+          if (artistMoviesData[artistId]) {
+            const movieBtn = document.createElement("button");
+            movieBtn.className = "option-btn movie-option";
+            movieBtn.textContent = artistMoviesData[artistId].title;
+            movieBtn.addEventListener("click", function () {
+              showMovieDetailsTop(artistId);
+            });
+            moviesListDiv.appendChild(movieBtn);
+          }
+        });
+
+        setTimeout(() => {
+          moviesTopArtistsOptions.classList.add("visible");
+        }, 10);
+      }
+
+      // Show movie details (for Top Artists) - CHANGED TO SHOW ALL DETAILS
+      function showMovieDetailsTop(artistId) {
+        moviesTopArtistsOptions.classList.remove("visible");
+
+        const movie = artistMoviesData[artistId];
+        const contentDiv = document.getElementById("movie-details-top-content");
+        contentDiv.innerHTML = "";
+
+        // Show all movie details with labels
+        const fields = [
+          "id",
+          "title",
+          "rating",
+          "rating_count",
+          "status",
+          "release_date",
+          "runtime",
+          "img_path",
+          "movie_path",
+          "imdb_id",
+          "description",
+          "poster_path",
+          "tagline",
+          "genres",
+          "production_companies",
+          "production_countries",
+          "languages",
+          "keywords",
+        ];
+
+        fields.forEach((field) => {
+          if (movie[field] !== undefined) {
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "data-item";
+
+            const keySpan = document.createElement("span");
+            keySpan.className = "data-key";
+            keySpan.textContent = field.replace("_", " ") + ":";
+
+            const valueSpan = document.createElement("span");
+            valueSpan.className = "data-value";
+            valueSpan.textContent = movie[field];
+
+            itemDiv.appendChild(keySpan);
+            itemDiv.appendChild(valueSpan);
+            contentDiv.appendChild(itemDiv);
+          }
+        });
+
+        setTimeout(() => {
+          movieDetailsTopData.classList.add("visible");
+        }, 10);
+      }
+
+      // Show movie options based on recommended artists
+      function showMoviesRecommendedArtistsOptions() {
+        optionsContainer.classList.remove("visible");
+
+        const recommended = recommendedArtistsData[currentUserId] || [];
+        const moviesListDiv = document.getElementById(
+          "movies-recommended-artists-list"
+        );
+        moviesListDiv.innerHTML = "";
+
+        recommended.forEach((artist) => {
+          const artistId = artist.artist_id;
+          if (artistMoviesData[artistId]) {
+            const movieBtn = document.createElement("button");
+            movieBtn.className = "option-btn movie-option";
+            movieBtn.textContent = artistMoviesData[artistId].title;
+            movieBtn.addEventListener("click", function () {
+              showMovieDetailsRecommended(artistId);
+            });
+            moviesListDiv.appendChild(movieBtn);
+          }
+        });
+
+        setTimeout(() => {
+          moviesRecommendedArtistsOptions.classList.add("visible");
+        }, 10);
+      }
+
+      // Show movie details (for Recommended Artists) - CHANGED TO SHOW ALL DETAILS
+      function showMovieDetailsRecommended(artistId) {
+        moviesRecommendedArtistsOptions.classList.remove("visible");
+
+        const movie = artistMoviesData[artistId];
+        const contentDiv = document.getElementById(
+          "movie-details-recommended-content"
+        );
+        contentDiv.innerHTML = "";
+
+        // Show all movie details with labels
+        const fields = [
+          "id",
+          "title",
+          "rating",
+          "rating_count",
+          "status",
+          "release_date",
+          "runtime",
+          "img_path",
+          "movie_path",
+          "imdb_id",
+          "description",
+          "poster_path",
+          "tagline",
+          "genres",
+          "production_companies",
+          "production_countries",
+          "languages",
+          "keywords",
+        ];
+
+        fields.forEach((field) => {
+          if (movie[field] !== undefined) {
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "data-item";
+
+            const keySpan = document.createElement("span");
+            keySpan.className = "data-key";
+            keySpan.textContent = field.replace("_", " ") + ":";
+
+            const valueSpan = document.createElement("span");
+            valueSpan.className = "data-value";
+            valueSpan.textContent = movie[field];
+
+            itemDiv.appendChild(keySpan);
+            itemDiv.appendChild(valueSpan);
+            contentDiv.appendChild(itemDiv);
+          }
+        });
+
+        setTimeout(() => {
+          movieDetailsRecommendedData.classList.add("visible");
+        }, 10);
+      }
+    </script>
+  </body>
+</html>
